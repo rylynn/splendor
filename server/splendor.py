@@ -158,8 +158,10 @@ def validate_player(game):
 @json_response
 def create_game(game):
     global num_created
-
-    if game in game_map:
+    if num_created >= 2 || len(game) >= 10:
+        # waiting queue logic
+        return {'result': {'error': 'Too Many Games OnLine PleaseWait or GameName too long'}}
+    if game in g:
         return {'result': {'error': 'Game already exists, try another name'}}
     new_game = GameManager(game)
     num_created += 1
@@ -334,6 +336,7 @@ def save_and_exit(number, frame):
     sys.exit()
 
 if __name__ == '__main__':
+    '''
     with open('server/words.txt') as f:
         words = f.read().split('\n')[:-1]
         random.shuffle(words)
@@ -345,6 +348,6 @@ if __name__ == '__main__':
                 game_map[k] = game_manager_from_dict(v)
     except IOError:
         pass
-
-    signal.signal(signal.SIGHUP, save_and_exit)
-    app.run(host='127.0.0.1', port=8000, threaded=True)
+    '''
+    #signal.signal(signal.SIGHUP, save_and_exit)
+    app.run(host='0.0.0.0', port=8080, threaded=True)
