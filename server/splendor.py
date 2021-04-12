@@ -198,7 +198,7 @@ def start_game(game, starter):
 def suggest_game():
     global game_map, words
     n = len(words)
-    idx = random.choice(xrange(n))
+    idx = random.choice(range(n))
     start = idx
     while words[idx] in game_map:
         idx = (idx + 1) % n
