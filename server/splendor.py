@@ -158,7 +158,7 @@ def validate_player(game):
 @json_response
 def create_game(game):
     global num_created
-    if num_created >= 2 || len(game) >= 10:
+    if num_created >= 2 or len(game) >= 10:
         # waiting queue logic
         return {'result': {'error': 'Too Many Games OnLine PleaseWait or GameName too long'}}
     if game in g:
