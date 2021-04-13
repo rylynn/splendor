@@ -161,8 +161,10 @@ def create_game(game):
     if num_created >= 2 or len(game) >= 10:
         # waiting queue logic
         return {'result': {'error': 'Too Many Games OnLine PleaseWait or GameName too long'}}
+        '''
     if game in g:
         return {'result': {'error': 'Game already exists, try another name'}}
+        '''
     new_game = GameManager(game)
     num_created += 1
     return {'game': new_game.uuid, 'start': new_game.starter, 'state': new_game.game.dict()}
