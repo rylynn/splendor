@@ -125,7 +125,7 @@ def game_manager_from_dict(obj):
     self = GameManager(obj['uuid'])
     self.starter = obj['starter']
     self.game = game_from_dict(obj['game'])
-    for k, v in obj['changed'].iteritems():
+    for k, v in obj['changed'].items():
         self.changed[int(k)] = v
     self.chats = obj['chats']
     self.ended = obj['ended']
@@ -266,7 +266,7 @@ def act(game, action, target):
 @json_response
 def list_games():
     delete_games = []
-    for k, v in game_map.iteritems():
+    for k, v in game_map.items():
         if not v.started and time.time() - v.created > 600:
             delete_games.append(k)
         elif v.started and time.time() - v.created > 24*60*60:
@@ -329,7 +329,7 @@ def save_and_exit(number, frame):
     global game_map
 
     games = {}
-    for k, v in game_map.iteritems():
+    for k, v in game_map.items():
         games[k] = v.private_dict()
     with open('server/save.json', 'w') as f:
         f.write(json.dumps(games))
@@ -344,7 +344,7 @@ if __name__ == '__main__':
     try:
         with open('server/save.json') as f:
             save = json.loads(f.read())
-            for k, v in save.iteritems():
+            for k, v in save.items():
                 game_map[k] = game_manager_from_dict(v)
     except IOError:
         pass
