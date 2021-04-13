@@ -197,6 +197,8 @@ def start_game(game, starter):
 @json_response
 def suggest_game():
     global game_map, words
+    return {'result': {'game': 'add an game name'}}
+    '''
     n = len(words)
     idx = random.choice(range(n))
     start = idx
@@ -204,7 +206,7 @@ def suggest_game():
         idx = (idx + 1) % n
         if idx == start:
             return {'error': 'No available games'}
-    return {'result': {'game': words[idx]}}
+    '''
 
 @app.route('/game/<game>/next', methods=['POST'])
 @json_response
