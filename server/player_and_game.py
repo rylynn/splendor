@@ -450,7 +450,7 @@ class Game(object):
 
         self.num_players = 0
         self.state = 'pregame'
-        self.players = [] * MAX_PLAYERS
+        self.players = [None] * MAX_PLAYERS
         self.pids = []
         self.logs = []
         self.winner = None

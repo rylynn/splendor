@@ -1,4 +1,12 @@
 package winkle.splendor;
+
+message Room {
+  optional strign id = 1;
+  optional Game game = 2;
+  optional uint64 create_time = 3;
+  repeated Audience audience = 4;
+}
+
 message Game {
  optional int64 id = 1;
  enum State {
@@ -7,12 +15,25 @@ message Game {
   STATE_PLAYING = 2;
   STATE_LAST_ROUND = 3;
   STATE_END = 4;
- }
+ };
  optional State state = 2;
- optional State player_turn = 3;
+ optional int32 player_turn = 3;
  optional Desk desk = 4;
- optional int64 last_update_ts = 5;
- repeated Player players = 6;
+ repeated Player players = 5;
+ optional int64 last_update_ts = 6;
+}
+
+message Audience {
+  optional uint64 id = 1; 
+}
+
+message PlayerAction {
+  enum Order {
+    NOTHING = 0;
+    GET_GEMS = 1;
+    BUY_CARD = 2;
+    BUY_NOBLE = 3;
+  };
 }
 
 message Desk {
@@ -45,7 +66,7 @@ message Gems {
     DIAMOND = 4;
     CHOCOLATE = 5; //黑
     GOLD = 6;
-  }
+  };
   optional Color color = 1;
 }
 
