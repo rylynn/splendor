@@ -46,7 +46,7 @@ class Game(object):
       self.logger.info('game start error because state is wrong: %d', self.game.state)
       return splendor_pb2.SYSTEM_ERROR
   
-  def get_color(color):
+  def get_color(self, color):
     if color == 'u':
       return splendor_pb2.SAPPHIRE
     elif color == 'w':
@@ -59,28 +59,28 @@ class Game(object):
       return splendor_pb2.CHOCOLATE
     return splendor_pb2.DIAMOND
 
-  def generate_pb_cards(self, card):
+  def generate_pb_cards(self, card, card_cnt):
     card = self.desk.cards.add()
     card.id = card_cnt
     card_cnt += 1
-    c_m = c.dict()
-    card.value_gems.color = get_color(c_m['color'])
+    c_m = card.dict()
+    card.value_gems.color = self.get_color(c_m['color'])
     card.value_gems.cost = 1
     card.score = c_m['points']
-    for k,v in c.cost:
+    for k,v in card.cost:
       gem = card.cost_gems.add()
-      gem.color = get_color[k]
+      gem.color = self.get_color(k)
       gem.cost = v
 
   def init_desk(self):
     self.desk = splendor_pb2.Desk()
     card_cnt = 1
     for c in self.level_1_cards:
-      self.generate_pb_cards(c)
+      self.generate_pb_cards(c, card_cnt)
     for c in self.level_2_cards:
-      self.generate_pb_cards(c)
-    for c in self.level_2_cards:
-      self.generate_pb_cards(c)
+      self.generate_pb_cards(c, card_cnt)
+    for c in self.level_3_cards:
+      self.generate_pb_cards(c, card_cnt)
  
   def init_cards(self):
     self.level_1_cards = [
@@ -124,7 +124,7 @@ class Game(object):
             Card(1, 'r', 0, 3, 0, 0, 0, 0),
             Card(1, 'r', 1, 4, 0, 0, 0, 0),
         ]
-    self.level_2_cars = [
+    self.level_2_cards = [
             Card(2, 'b', 1, 3, 2, 2, 0, 0),
             Card(2, 'b', 1, 3, 0, 3, 0, 2),
             Card(2, 'b', 2, 0, 1, 4, 2, 0),
