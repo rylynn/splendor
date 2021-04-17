@@ -1,6 +1,8 @@
 from flask import Flask, Response, request, send_from_directory
 from functools import wraps
 from player_and_game import *
+from model.splendor_dao import SplendorDao
+from domain.room import RoomManager, Room
 import signal
 import random
 import time
@@ -9,6 +11,10 @@ import os
 import sys
 
 app = Flask(__name__)
+REDIS_URL = "redis://:max123@localhost:6379/0"
+splendor_dao = SplendorDao(app)
+room_manager = RoomManager(app)
+
 game_map = {}
 POLL_INTERVAL = 0.4
 client_dir = os.path.join(os.getcwd(), 'client')
@@ -321,6 +327,12 @@ def static_proxy(filename):
 @app.route('/<game>')
 def existing_game(game):
     return static_proxy('index.html')
+
+@app.route('/roomlist')
+@json_response
+def roomlist():
+    rooms = room_manager.list_rooms(app, splendor_dao)
+    return {'rooms': rooms}
 
 @app.route('/stats')
 @json_response

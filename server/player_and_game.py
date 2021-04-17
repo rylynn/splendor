@@ -338,7 +338,6 @@ def noble_from_dict(obj):
 class Game(object):
     def __init__(self):
         level_1 = [
-            Card('b', 0, 1, 1, 1, 1, 0),
             Card('b', 0, 1, 2, 1, 1, 0),
             Card('b', 0, 2, 2, 0, 1, 0),
             Card('b', 0, 0, 0, 1, 3, 1),

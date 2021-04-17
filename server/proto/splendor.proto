@@ -4,6 +4,7 @@ package winkle.splendor;
 enum RetCode {
   SUCCESS = 0;
   SYSTEM_ERROR = 1;
+  GAME_NOT_READY = 2;
   REACH_PLAER_LIMIT = 100;
   PLAYER_NOT_VALID = 101;
 }
@@ -25,7 +26,7 @@ message Game {
   STATE_END = 4;
  };
  optional State state = 2 [default = STATE_UNKNOWN];
- optional int32 cur_player_id = 3;
+ optional int32 cur_player_idx = 3;
  optional Desk desk = 4;
  repeated Player players = 5;
  optional int64 last_update_ts = 6;
@@ -57,6 +58,7 @@ message Player {
   optional int32 match_index = 3 [default = 1];
   optional bool is_ready = 4 [default = false];
   optional bool is_active = 5 [default = false];
+  optional int32 score = 6;
 }
 
 message Card {
