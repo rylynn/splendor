@@ -249,6 +249,9 @@ class DummyPlayer(object):
     def start_turn(self):
         pass
 
+    def acted(self):
+        pass
+
 DUMMY_PLAYER = DummyPlayer()
 
 class Card(object):
@@ -444,7 +447,8 @@ class Game(object):
             Noble(8, 3, 3, 3, 3, 0, 0),
             Noble(9, 3, 3, 0, 0, 3, 3),
         ]
-        shuffle_deck(self.noble_pool)
+        #shuffle_deck(self.noble_pool)
+        random.shuffle(self.noble_pool)
         self.nobles = self.noble_pool[:1]
 
         self.num_players = 0
@@ -466,7 +470,8 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            shuffle_deck(self.decks[level])
+            #shuffle_deck(self.decks[level])
+            random.shuffle(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
 

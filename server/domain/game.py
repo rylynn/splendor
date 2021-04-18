@@ -1,7 +1,7 @@
 import sys
 sys.path.append("..")
 from datetime import datetime
-from cards import Card, Noble
+from domain.cards import Card, Noble
 import glog as log
 from proto import splendor_pb2
 import time
@@ -12,7 +12,6 @@ MAX_PLAYER_SIZE = 4
 
 def GenerateGame():
   return uuid.uuid4().hex
-
 class Game(object):
   def __init__(self, room_id, logger, pb_game):
     self.logger = logger

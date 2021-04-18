@@ -1,8 +1,9 @@
 from flask import Flask, Response, request, send_from_directory
 from functools import wraps
 from player_and_game import *
-from model.splendor_dao import SplendorDao
-from domain.room import RoomManager, Room
+from model.splendor_dao import SplendorDao, SplendorLocalDao
+#from domain.room import RoomManager, Room
+#from game_core import *
 import signal
 import random
 import time
@@ -12,12 +13,13 @@ import sys
 
 app = Flask(__name__)
 REDIS_URL = "redis://:max123@localhost:6379/0"
-splendor_dao = SplendorDao(app)
-room_manager = RoomManager(app)
+splendor_dao = SplendorLocalDao(app)
+#room_manager = RoomManager(app)
 
 game_map = {}
-POLL_INTERVAL = 0.4
-client_dir = os.path.join(os.getcwd(), 'client')
+POLL_INTERVAL = 0.5
+#client_dir = os.path.join(os.getcwd(), 'client')
+client_dir = os.path.join(os.getcwd(), '../client')
 words = []
 num_created = 0
 
@@ -64,8 +66,8 @@ class GameManager(object):
     def poll(self, pid):
         global game_map
 
-        while not self.changed[pid]:
-            time.sleep(POLL_INTERVAL)
+        while pid not in self.changed or not self.changed[pid]:
+            #time.sleep(POLL_INTERVAL)
             yield " "
 
         if self.ended.get(pid):
@@ -139,38 +141,34 @@ def game_manager_from_dict(obj):
     self.started = obj['started']
     return self
 
-def validate_player(game):
+def validate_player(game, pid, uuid):
     global game_map
 
     if game not in game_map:
-        return None, None
-
-    pid = request.args.get('pid')
-    uuid = request.args.get('uuid')
+        return None
 
     try:
         pid = int(pid)
     except ValueError:
-        return None, None
+        return None
 
     game_manager = game_map[game]
     if pid not in game_manager.game.pids:
-        return None, None
+        return None
     if game_manager.game.players[pid].uuid != uuid:
-        return None, None
-    return pid, game_manager
+        return None
+    return game_manager
 
 @app.route('/create/<game>', methods=['POST'])
 @json_response
 def create_game(game):
     global num_created
+    global game_map
     if num_created >= 2 or len(game) >= 10:
         # waiting queue logic
         return {'result': {'error': 'Too Many Games OnLine PleaseWait or GameName too long'}}
-        '''
-    if game in g:
+    if game in game_map:
         return {'result': {'error': 'Game already exists, try another name'}}
-        '''
     new_game = GameManager(game)
     num_created += 1
     return {'game': new_game.uuid, 'start': new_game.starter, 'state': new_game.game.dict()}
@@ -219,7 +217,9 @@ def suggest_game():
 @app.route('/game/<game>/next', methods=['POST'])
 @json_response
 def next(game):
-    pid, game_manager = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game_manager = validate_player(game, pid, uuid)
     if game_manager is None:
         return {'error': 'Invalid game / pid / uuid'}
     game = game_manager.game
@@ -233,7 +233,9 @@ def next(game):
 @app.route('/game/<game>/chat', methods=['POST'])
 @json_response
 def chat(game):
-    pid, game_manager = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game_manager = validate_player(game, pid, uuid)
     if game_manager is None:
         return {'error': 'Invalid game / pid / uuid'}
     payload = {}
@@ -248,9 +250,12 @@ def chat(game):
 @app.route('/game/<game>/<action>/<target>', methods=['POST'])
 @json_response
 def act(game, action, target):
-    pid, game_manager = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game_manager = validate_player(game, pid, uuid)
     if game_manager is None:
-        return {'error': 'Invalid game / pid / uuid'}
+        return redirect(url_for('/'))
+        #return {'error': 'Invalid game / pid / uuid'}
     game = game_manager.game
     if pid != game.active_player_index:
         return {'error': 'Not your turn'}
@@ -288,7 +293,9 @@ def list_games():
 @app.route('/rename/<game>/<name>', methods=['POST'])
 @json_response
 def rename_player(game, name):
-    pid, game_manager = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game_manager = validate_player(game, pid, uuid)
     if game_manager is None:
         return {'error': 'Invalid game / pid / uuid'}
     game_manager.game.rename_player(pid, name)
@@ -298,14 +305,18 @@ def rename_player(game, name):
 @app.route('/stat/<game>', methods=['GET'])
 @json_response
 def stat_game(game):
-    pid, game_manager = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game_manager = validate_player(game, pid, uuid)
     if game_manager is None:
         return {'error': 'Invalid game / pid / uuid', 'status': 404}
     return {'state': game_manager.game.dict(pid), 'chat': game_manager.chats}
 
 @app.route('/poll/<game>', methods=['GET'])
 def poll_game(game):
-    pid, game = validate_player(game)
+    pid = request.args.get('pid')
+    uuid = request.args.get('uuid')
+    game = validate_player(game, pid, uuid)
     if game is None:
         return Response(json.dumps({'error': 'Invalid game / pid / uuid', 'status': 404}),
                         content_type='application/json',
@@ -328,17 +339,13 @@ def static_proxy(filename):
 def existing_game(game):
     return static_proxy('index.html')
 
-@app.route('/roomlist')
-@json_response
-def roomlist():
-    rooms = room_manager.list_rooms(app, splendor_dao)
-    return {'rooms': rooms}
-
 @app.route('/stats')
 @json_response
 def get_stats():
     games = game_map.keys()
     num_games = len(games)
+    if num_games == 0:
+        return {'result': {'status': 'No Game Start'}}
     return {'games': games, 'num_games': num_games, 'num_created': num_created}
 
 def save_and_exit(number, frame):
@@ -350,7 +357,43 @@ def save_and_exit(number, frame):
     with open('server/save.json', 'w') as f:
         f.write(json.dumps(games))
     sys.exit()
+'''
+@app.route('/roomlist')
+@json_response
+def roomlist():
+    rooms = room_manager.list_rooms(splendor_dao)
+    i = 0
+    res = {}
+    for k in rooms:
+      res['room_' + str(i)] = k.get_room_info()
+      i+=1
+    return res 
 
+@app.route('/createroom')
+@json_response
+def create_room():
+    room = room_manager.add_room(splendor_dao)
+    return {'room': room.get_room_info()}
+
+@app.route('/add_room/<room_id>', methods=['GET'])
+@json_response
+def add_room():
+    room = room_manager.add_room(splendor_dao)
+    return {'room': room.get_room_info()}
+
+@app.route('/create2/<room_id>', methods=['POST'])
+@json_response
+def create_game2(room_id):
+    uid = 'uid' in request.form and request.form["uid"] or '0'
+    ret, game = new_create_game(app, room_manager, splendor_dao, room_id, uid)
+    if ret == splendor_pb2.SUCCESS and game is None:
+        room_manager.total_created_game += 1
+        return {'game': uuid, 'start': uid, 'state': game.dict()}
+    elif ret == splendor_pb2.ROOM_IS_INVALID:
+        return {'result': {'error': 'Room Is Not Found'}}
+    elif ret == splendor_pb2.PLAYER_NOT_VALID:
+        return {'result': {'error': 'user Is Not Valid'}}
+'''
 if __name__ == '__main__':
     '''
     with open('server/words.txt') as f:
@@ -366,4 +409,4 @@ if __name__ == '__main__':
         pass
     '''
     #signal.signal(signal.SIGHUP, save_and_exit)
-    app.run(host='0.0.0.0', port=8080, threaded=True)
+    app.run(host='0.0.0.0', port=8080, threaded=True, debug=True)
